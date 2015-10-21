@@ -1,7 +1,7 @@
 var grunt = require('grunt');
 
-grunt.registerTask('default', 'description', function() {
-	console.log('First task');
+grunt.registerTask('world', 'description', function() {
+	console.log('Hello world');
 });
 
 grunt.registerTask('hello', 'say hello', function(name) {
@@ -10,3 +10,5 @@ grunt.registerTask('hello', 'say hello', function(name) {
 
 	console.log('Good day ' + name);
 });
+
+grunt.registerTask('default', ['world', 'hello:Deema']);

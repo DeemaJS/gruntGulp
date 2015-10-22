@@ -1,28 +1,41 @@
-var grunt = require('grunt');
+module.exports = function(grunt){
+	grunt.config.init({
+		concat: {
+			options: {
+				dest: 'tmp',
+				templates: ['templates/index.html', 'templates/footer.html'],
+				javascripts: ['javascripts/*.js'],
+				stylesheets: ['stylesheets']
+			}
+		}
+	});
 
-/*grunt.registerTask('world', 'description', function() {
-	console.log('Hello world');
-});
+	var recursiveConcat = function(source, result){
+		grunt.file.expand(source).forEach(function(file){
+			if(grunt.file.isDir(file)){
+				grunt.file.recurse(file, function(f){
+					result = recursiveConcat(f, result);
+				});
+			} else {
+				grunt.log.writeln('Concatenating ' + file + ' to other ' + result.length + ' characters.');
+				result += grunt.file.read(file);
+			}
+		});
+		return result;
+	};
 
-grunt.registerTask('hello', 'say hello', function(name) {
-	if(!name || !name.length)
-		grunt.warn('Wher is a NAME?');
+	grunt.registerTask('concat', 'concatenates files', function(type){
+    grunt.config.requires('concat.options.' + type); // fail the task if this propary is missing.
+    grunt.config.requires('concat.options.dest');
 
-	console.log('Good day ' + name);
-});
+    var files = grunt.config.get('concat.options.' + type),
+    dest = grunt.config.get('concat.options.dest'),
+    concatenated = recursiveConcat(files, '');
 
-grunt.registerTask('default', ['world', 'hello:Deema']);*/
+    grunt.log.writeln('Writing ' + concatenated.length + ' chars to ' + 'tmp/' + type);
+    grunt.file.write(dest + '/' + type, concatenated);
+  });
 
-grunt.initConfig({
-	print: {
-		target1: ['index.html', 'src/styles.css', 2],
-		target2: 'data',
-		hello: 'world'
-	}
-});
-
-grunt.registerMultiTask('print', 'print targets', function() {
-	grunt.log.writeln(this.target + ': ' + this.data);
-});
-
-grunt.log.ok('Ther good');
+	grunt.registerTask('concatAll', ['concat:templates', 'concat:javascripts', 'concat:stylesheets']);
+	grunt.registerTask('default', ['concatAll']);
+}

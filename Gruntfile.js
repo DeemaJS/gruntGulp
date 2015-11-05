@@ -1,41 +1,46 @@
-module.exports = function(grunt){
-	grunt.config.init({
-		concat: {
-			options: {
-				dest: 'tmp',
-				templates: ['templates/index.html', 'templates/footer.html'],
-				javascripts: ['javascripts/*.js'],
-				stylesheets: ['stylesheets']
-			}
-		}
-	});
-
-	var recursiveConcat = function(source, result){
-		grunt.file.expand(source).forEach(function(file){
-			if(grunt.file.isDir(file)){
-				grunt.file.recurse(file, function(f){
-					result = recursiveConcat(f, result);
-				});
-			} else {
-				grunt.log.writeln('Concatenating ' + file + ' to other ' + result.length + ' characters.');
-				result += grunt.file.read(file);
-			}
-		});
-		return result;
-	};
-
-	grunt.registerTask('concat', 'concatenates files', function(type){
-    grunt.config.requires('concat.options.' + type); // fail the task if this propary is missing.
-    grunt.config.requires('concat.options.dest');
-
-    var files = grunt.config.get('concat.options.' + type),
-    dest = grunt.config.get('concat.options.dest'),
-    concatenated = recursiveConcat(files, '');
-
-    grunt.log.writeln('Writing ' + concatenated.length + ' chars to ' + 'tmp/' + type);
-    grunt.file.write(dest + '/' + type, concatenated);
+module.exports = function(grunt) {
+  grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
+    concat: {
+      options: {
+        separator: ';'
+      },
+      dist: {
+        src: ['src/**/*.js'],
+        dest: 'dist/<%= pkg.name %>.js'
+      }
+    },
+    uglify: {
+      dist: {
+        files: {
+          'dist/<%= pkg.name %>.min.js': ['<%= concat.dist.dest %>']
+        }
+      }
+    },
+    jshint: {
+      files: ['gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
+      options: {
+        globals: {
+          jQuery: true,
+          console: true,
+          module: true,
+          document: true
+        }
+      }
+    },
+    watch: {
+      files: ['<%= jshint.files =>'],
+      tasks: ['jshint', 'concat', 'uglify']
+    }
   });
 
-	grunt.registerTask('concatAll', ['concat:templates', 'concat:javascripts', 'concat:stylesheets']);
-	grunt.registerTask('default', ['concatAll']);
-}
+  // Подключаем наши плагины
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+
+  // Регистрируем задачу по умолчанию
+  grunt.registerTask('default', ['jshint', 'concat', 'uglify']);
+
+};
